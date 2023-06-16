@@ -11,8 +11,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import Draggable from "react-draggable";
-import axios from "axios";
-import { server_url } from "@/constants";
+import { ApiBox } from "@/axios-api/api";
 
 const style = {
   position: "absolute",
@@ -38,7 +37,6 @@ const Some = (props) => {
       setColor(props.background);
       setIsLoaded(true);
     }
-    console.log(props);
   }, [props]);
 
   const {
@@ -47,22 +45,25 @@ const Some = (props) => {
     formState: { errors },
   } = useForm();
 
-  useEffect(() => {
-    console.log(process.env.NODE_ENV);
-    console.log(errors);
-  }, [errors]);
-
   const onSubmit = async (data) => {
-    console.log(data);
     setHeight(data.height);
     setWidth(data.width);
     setColor(data.color);
-    await axios.patch(`${server_url}/box/parameters`, {
+    await ApiBox.updateBoxProperties({
       height: Number(data.height),
       width: Number(data.width),
       background: data.color,
     });
     setOpen(false);
+  };
+
+  const stopHandler = async (e, p) => {
+    setPositionX(p.x);
+    setPositionY(p.y);
+    await ApiBox.updateBoxProperties({
+      x: Math.round(p.x),
+      y: Math.round(p.y),
+    });
   };
 
   const [open, setOpen] = useState(false);
@@ -128,8 +129,8 @@ const Some = (props) => {
                 </Grid>
               </Grid>
               <Grid container>
-                <div> {errors.height && errors.height.message}</div>
-                <div> {errors.width && errors.width.message}</div>
+                <div>{errors.height?.message}</div>
+                <div>{errors.width?.message}</div>
               </Grid>
               <Grid container>
                 <Button type="submit" variant="contained">
@@ -151,14 +152,7 @@ const Some = (props) => {
         <Draggable
           bounds={"body"}
           position={{ x: positionX, y: positionY }}
-          onStop={async (e, p) => {
-            setPositionX(p.x);
-            setPositionY(p.y);
-            await axios.patch(`${server_url}/box/coordinates`, {
-              x: p.x,
-              y: p.y,
-            });
-          }}
+          onStop={stopHandler}
         >
           {isLoaded ? (
             <div
@@ -187,9 +181,15 @@ const Some = (props) => {
 };
 
 export const getServerSideProps = async () => {
-  const res = await axios.get(`${server_url}/box/parameters`);
-  if (res.data === null) {
-    const newBox = await axios.get(`${server_url}/box/parameters`);
+  const res = await ApiBox.getBoxParameters();
+  if (res.data === "No data") {
+    const newBox = await ApiBox.createBox({
+      width: 200,
+      height: 200,
+      x: 200,
+      y: 200,
+      background: "red",
+    });
     return { props: newBox };
   }
   return { props: res.data };
