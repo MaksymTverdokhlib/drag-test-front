@@ -72,7 +72,17 @@ const Some = (props) => {
   const [color, setColor] = useState("red");
   const [positionX, setPositionX] = useState(100);
   const [positionY, setPositionY] = useState(100);
+  const [displayedPositionX, setDisplayedPositionX] = useState(positionX);
+  const [displayedPositionY, setDisplayedPositionY] = useState(positionY);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setDisplayedPositionX(positionX);
+  }, [positionX]);
+
+  useEffect(() => {
+    setDisplayedPositionY(positionY);
+  }, [positionY]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -149,10 +159,37 @@ const Some = (props) => {
           position: "relative",
         }}
       >
+        <div className="properties-block">
+          <div style={{ display: "flex" }}>
+            <div>Width:</div>
+            <div>{width}</div>
+          </div>
+          <div style={{ display: "flex" }}>
+            <div>Height:</div>
+            <div>{height}</div>
+          </div>
+          <div style={{ display: "flex" }}>
+            <div>Position x:</div>
+            <div>{displayedPositionX}</div>
+          </div>
+          <div style={{ display: "flex" }}>
+            <div>Position y:</div>
+            <div>{displayedPositionY}</div>
+          </div>
+          <div style={{ display: "flex" }}>
+            <div>Background:</div>
+            <div>{color}</div>
+          </div>
+          <div></div>
+        </div>
         <Draggable
           bounds={"body"}
           position={{ x: positionX, y: positionY }}
           onStop={stopHandler}
+          onDrag={(e, p) => {
+            setDisplayedPositionX(p.x);
+            setDisplayedPositionY(p.y);
+          }}
         >
           {isLoaded ? (
             <div
